@@ -1,7 +1,5 @@
 # Free Delivery Writeup
 
-# Free Delivery Writeup
-
 ---
 
 ## Summary:
@@ -34,25 +32,25 @@ Looking at the initial code in MainActivity, there’s some functions that stand
 
 Class a shown below performs an async background task and contains multiple obfuscated strings. 
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%201.png)
+![Untitled](images/Untitled%201.png)
 
 Looking at the first obfuscated string, it gets passed into the X0 function which seems to a simple base64 decode and cast to a string:
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%202.png)
+![Untitled](images/Untitled%202.png)
 
 Now, we can label X0 as a base64 decode function in Jadx and determine the first obfuscated string, “aHR0cDovLzEyNy4wLjAuMToxMjU0” is “[http://127.0.0.1:1254](http://127.0.0.1:1254/)” when base64 decoded. In this case, the url is a placeholder but in the real world you’ll see domains or public IP Addresses referenced which are controlled by the malware author. 
 
 The next part of the StringBuilder, line 49, passes the variable mainActivity2.f12220f which evaluates to build.Model (the device manufacturer model name/number), to the a1 function which performs a XOR on it with the SPONGEBOB string and base64 encodes it. The return value of this is then appended to the sb StringBuilder. 
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%203.png)
+![Untitled](images/Untitled%203.png)
 
 Next, Q0 is passed with our current string and O0 on line 128 will be called with this string since the year variable will evaluate to 2024 and (Z0() * 23) + 45 = 2023 which means the else condition will always be triggered.
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%204.png)
+![Untitled](images/Untitled%204.png)
 
 Finally, we get to the part where network requests are finally made and a HTTP request is made with the string we established before.
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%205.png)
+![Untitled](images/Untitled%205.png)
 
 Essentially, the big picture of what’s happening is that the app is performing HTTP data exfiltration to a domain and getting device information such as the device model, performing some basic encryption, and then appending it as data in the HTTP request to later be deciphered. Lines 52-55 do the same as the first request but instead does so with the device MAC Address. We get to line 58 and it does the same thing but for a third time but it looks like the information exfiltrated has already been encrypted. 
 
@@ -76,7 +74,7 @@ Next up, we should probably look for the weird shell commands that were mentione
 
 Looking below, we see the native function rgae.t() and the freedelivery native library being loaded.
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%206.png)
+![Untitled](images/Untitled%206.png)
 
 In order to analyze the native code, we can rename the .apk to .zip, and then analyze the [libfreedelivery.so](http://libfreedelivery.so) executables in the lib folder of the unzipped folder. Since the function is dynamically linked (based on the absence of RegisterNatives function), we’ll be able to find the corresponding function in Ghidra with Java_ prefix and class and method name separated by underscores. 
 
