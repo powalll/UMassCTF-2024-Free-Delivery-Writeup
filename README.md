@@ -24,7 +24,7 @@ Firstly, let’s throw the program into Jadx to further dive into the decompiled
 
 Looking at the AndroidManifest.xml, the main thing of interest is the startup Activity, identified by lines 12-13 of the manifest**.** Looking at android:name on line 10, we know we should be looking further into “**com.example.freedelivery.MainActivity”**. 
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled.png)
+![Untitled](images/Untitled.png)
 
 Based on the challenge prompt, we should keep our eyes out for ways that the app could potentially generating malicious network traffic and make shell commands. 
 
@@ -78,7 +78,7 @@ Looking below, we see the native function rgae.t() and the freedelivery native l
 
 In order to analyze the native code, we can rename the .apk to .zip, and then analyze the [libfreedelivery.so](http://libfreedelivery.so) executables in the lib folder of the unzipped folder. Since the function is dynamically linked (based on the absence of RegisterNatives function), we’ll be able to find the corresponding function in Ghidra with Java_ prefix and class and method name separated by underscores. 
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%207.png)
+![Untitled](images/Untitled%207.png)
 
 We finally see the source of the shell commands at line 37 with commands being sent through system! If you look at line 32, you should be able to extract the flag by looking at the data region and getting the XOR of it with 0x55. 
 
@@ -107,15 +107,15 @@ Java.perform(function () {
 
 In Jadx, we can find usage of our native function and eventually trace it to the onClick on line 210
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%208.png)
+![Untitled](images/Untitled%208.png)
 
 Since there’s only four buttons on the app, we can try pressing all of them and seeing if any of them reach the native code. However, the app crashes every time we press a button! Looking at lines 190-191, it looks like a division by 0 could be causing the app to crash if V0, P0, R0, S0, or U0 return true. 
 
 Going through some of them, they essentially perform anti-emulation or debugging checks to make it harder to analyze. 
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%209.png)
+![Untitled](images/Untitled%209.png)
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%2010.png)
+![Untitled](images/Untitled%2010.png)
 
 Using Frida, we can hook all these functions to return false and bypass these crashes. 
 
@@ -155,4 +155,4 @@ Running the following command and pressing the bottom right button should get us
 frida -U -l solve.js -f com.example.freedelivery
 ```
 
-![Untitled](Free%20Delivery%20Writeup%20aaa953e4f62741b2831d5636cbe0f508/Untitled%2011.png)
+![Untitled](images/Untitled%2011.png)
